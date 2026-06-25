@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Entrevista AI</title>
+  <style>
+    body {
+      font-family: Arial;
+      background: #f5f5f5;
+    }
+
+    #chat {
+      width: 400px;
+      margin: 40px auto;
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      height: 500px;
+      overflow-y: auto;
+      box-shadow: 0px 0px 10px rgba(0,0,0,0.1);
+    }
+
+    .msg {
+      margin: 10px 0;
+      padding: 10px;
+      border-radius: 10px;
+      max-width: 70%;
+    }
+
+    .bot {
+      background: #e3f2fd;
+      text-align: left;
+    }
+
+    .user {
+      background: #c8e6c9;
+      text-align: right;
+      margin-left: auto;
+    }
+
+    #input {
+      display: flex;
+      width: 400px;
+      margin: auto;
+    }
+
+    input {
+      flex: 1;
+      padding: 10px;
+    }
+
+    button {
+      padding: 10px;
+      background: #007bff;
+      color: white;
+      border: none;
+    }
+  </style>
+</head>
+<body>
+
+<div id="chat"></div>
+
+<div id="input">
+  <input id="text" placeholder="Escribe tu respuesta..." />
+  <button onclick="sendMessage()">Enviar</button>
+</div>
+
+<script>
+let sessionId = null;
+
+// URL de tu API (IMPORTANTE cambiar en Codespaces)
+//const API_URL = "http://127.0.0.1:8000";
+const API_URL = "https://TU-CODESPACE-8000.app.github.dev";
+
+// Mostrar mensajes
+function addMessage(text, sender) {
+  const chat = document.getElementById("chat");
+  const msg = document.createElement("div");
+  msg.className = "msg " + sender;
+  msg.innerText = text;
+  chat.appendChild(msg);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+// Iniciar entrevista
+async function startInterview() {
+  const res = await fetch(`${API_URL}/start`, {
+    method: "POST"
+  });
+
+  const data = await res.json();
+  sessionId = data.session_id;
+
+  addMessage(data.pregunta, "bot");
+}
+
+// Enviar respuesta
+async function sendMessage() {
+  const input = document.getElementById("text");
+  const text = input.value;
+
+  if (!text) return;
+
+  addMessage(text, "user");
+
+  input.value = "";
+
+  const res = await fetch(`${API_URL}/responder`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      session_id: sessionId,
+      respuesta: text
+    })
+  });
+
+  const data = await res.json();
+
+  if (data.pregunta) {
+    addMessage(data.pregunta, "bot");
+  } else {
+    addMessage(
+      `✅ Resultado: ${data.decision_final} (Score: ${data.score_final})`,
+      "bot"
+    );
+  }
+}
+
+// Iniciar automáticamente
+startInterview();
+
+</script>
+
+</body>
+</html>
